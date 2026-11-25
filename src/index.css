@@ -1,0 +1,194 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Fraunces", Georgia, Cambria, serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --vs-bg: #FFFFFF;
+  --vs-bg-subtle: #F5F3FF;
+  --vs-surface: #FFFFFF;
+  --vs-surface-muted: #F8FAFC;
+  --vs-surface-tint: #EEF2FF;
+  --vs-input-bg: #FFFFFF;
+  --vs-table-head: #F5F3FF;
+  --vs-hover: #F5F3FF;
+  --vs-border: #E2E8F0;
+  --vs-border-strong: #DDD6FE;
+  --vs-text: #111827;
+  --vs-text-secondary: #475569;
+  --vs-text-muted: #64748B;
+  --vs-accent: #4F46E5;
+  --vs-accent-hover: #4338CA;
+  --vs-accent-contrast: #FFFFFF;
+  --vs-accent-soft: #EEF2FF;
+  --vs-accent-soft-text: #3730A3;
+  --vs-btn-primary-bg: #4F46E5;
+  --vs-btn-primary-hover: #4338CA;
+  --vs-btn-primary-text: #FFFFFF;
+  --vs-warning: #D97706;
+  --vs-warning-soft: #FEF3C7;
+  --vs-danger: #DC2626;
+  --vs-danger-soft: #FEE2E2;
+  --vs-success: #15803D;
+  --vs-success-soft: #DCFCE7;
+  --vs-chart-line: #4F46E5;
+  --vs-chart-band: #6366F1;
+  --vs-chart-grid: #E2E8F0;
+  --vs-chart-ref: #111827;
+  --vs-hero-wash-a: rgba(238, 242, 255, 0.7);
+  --vs-hero-wash-b: rgba(245, 243, 255, 0.7);
+  --vs-radius-card: 1rem;
+  --vs-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    color: var(--vs-text);
+    background-color: var(--vs-bg);
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  body {
+    color: var(--vs-text);
+    background-color: var(--vs-bg);
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.036em;
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.024em;
+    line-height: 1.16;
+    text-wrap: balance;
+  }
+
+  h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.014em;
+  }
+
+  [data-theme="studio"] h1,
+  [data-theme="studio"] h2 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-editorial {
+    font-family: var(--font-serif);
+  }
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .vs-kpi-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.025em;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .vs-surface-card {
+    background-color: var(--vs-surface);
+    border: 1px solid var(--vs-border);
+    border-radius: var(--vs-radius-card);
+    box-shadow: var(--vs-shadow-card);
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .vs-glass-shell {
+    background-color: var(--vs-surface);
+    border: 1px solid var(--vs-border);
+    box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.06);
+  }
+  .vs-glass-card {
+    background-color: var(--vs-surface);
+    border: 1px solid var(--vs-border);
+    border-radius: var(--vs-radius-card);
+    box-shadow: var(--vs-shadow-card);
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .vs-glass-subcard {
+    background-color: var(--vs-bg-subtle);
+    border: 1px solid var(--vs-border);
+    transition: background-color 180ms ease, border-color 180ms ease;
+  }
+  .vs-glass-chart-pane {
+    background-color: var(--vs-surface);
+    border: 1px solid var(--vs-border);
+    transition: background-color 180ms ease, border-color 180ms ease;
+  }
+  .vs-recharts-glass .recharts-cartesian-axis-tick-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.015em;
+  }
+  .vs-btn-primary {
+    background-color: var(--vs-btn-primary-bg);
+    color: var(--vs-btn-primary-text);
+    transition: background-color 150ms ease, opacity 150ms ease;
+  }
+  .vs-btn-primary:hover {
+    background-color: var(--vs-btn-primary-hover);
+  }
+  .vs-btn-secondary {
+    background-color: var(--vs-surface);
+    border: 1px solid var(--vs-border-strong);
+    color: var(--vs-text);
+    transition: background-color 150ms ease, border-color 150ms ease;
+  }
+  .vs-btn-secondary:hover {
+    background-color: var(--vs-hover);
+  }
+  .vs-input {
+    background-color: var(--vs-input-bg);
+    border: 1px solid var(--vs-border);
+    color: var(--vs-text);
+  }
+  .vs-input:focus {
+    border-color: var(--vs-accent);
+    outline: none;
+  }
+}
+
+@keyframes vs-slide-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

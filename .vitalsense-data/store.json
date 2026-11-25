@@ -1,0 +1,1016 @@
+{
+  "accounts": [
+    {
+      "id": "user_member_elena",
+      "name": "Elena Vance",
+      "email": "elena.vance@vitalsense.demo",
+      "role": "member",
+      "avatarUrl": "/src/assets/images/avatar_patient_1795280112813.jpg",
+      "relationOrTitle": "Monitored Member",
+      "passwordHash": "bb71c212ecc9f34ee44e53e6398af4b275ea4078dbccf6149a066e9bc846c5ac9c9e3f9aac23d7677f643162c19ae2b27f5adcb9ffd83fbc8ddd4c2c0c3c4e45",
+      "passwordSalt": "eee5257ce551e70ac36372f54cd95a98"
+    },
+    {
+      "id": "user_caregiver_sarah",
+      "name": "Sarah Vance",
+      "email": "sarah.vance@vitalsense.demo",
+      "role": "caregiver",
+      "avatarUrl": "/src/assets/images/avatar_caregiver_1795280111139.jpg",
+      "relationOrTitle": "Authorized Caregiver · Sister",
+      "passwordHash": "4fd07b7125c2be18fae83d74011ca0b9ca99b875f9498b8c125954f2ed0ff195cba4c76b9d39d70cc34271bb6397b0110e2364d7b6c31c54f6a91e0ce32f1993",
+      "passwordSalt": "04b452d7c32f6fdea1f391d1455b1756"
+    }
+  ],
+  "readings": [
+    {
+      "id": "baseline_demo_gradual_drift_0",
+      "timestamp": "2026-11-01T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 62.4,
+      "spo2": 97.5,
+      "temperature": 36.43,
+      "respiratoryRate": 14.9,
+      "hrv": 51.8,
+      "sleepHours": 7.1,
+      "steps": 8215
+    },
+    {
+      "id": "baseline_demo_gradual_drift_1",
+      "timestamp": "2026-11-02T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 90,
+      "heartRate": 61.7,
+      "spo2": 97.7,
+      "temperature": 36.4,
+      "respiratoryRate": 14.6,
+      "hrv": 51.5,
+      "sleepHours": 7.7,
+      "steps": 7214
+    },
+    {
+      "id": "baseline_demo_gradual_drift_2",
+      "timestamp": "2026-11-03T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 90,
+      "heartRate": 61.3,
+      "spo2": 97.7,
+      "temperature": 36.55,
+      "respiratoryRate": 14.1,
+      "hrv": 56,
+      "sleepHours": 7.4,
+      "steps": 7252
+    },
+    {
+      "id": "baseline_demo_gradual_drift_3",
+      "timestamp": "2026-11-04T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 60.7,
+      "spo2": 98.2,
+      "temperature": 36.48,
+      "respiratoryRate": 14.2,
+      "hrv": 52.1,
+      "sleepHours": 7.6,
+      "steps": 6973
+    },
+    {
+      "id": "baseline_demo_gradual_drift_4",
+      "timestamp": "2026-11-05T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 91,
+      "heartRate": 62.7,
+      "spo2": 97.8,
+      "temperature": 36.55,
+      "respiratoryRate": 14.4,
+      "hrv": 52,
+      "sleepHours": 7.3,
+      "steps": 7038
+    },
+    {
+      "id": "baseline_demo_gradual_drift_5",
+      "timestamp": "2026-11-06T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 92,
+      "heartRate": 62.4,
+      "spo2": 97.9,
+      "temperature": 36.5,
+      "respiratoryRate": 15.1,
+      "hrv": 55.2,
+      "sleepHours": 7.6,
+      "steps": 7711
+    },
+    {
+      "id": "baseline_demo_gradual_drift_6",
+      "timestamp": "2026-11-07T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 91,
+      "heartRate": 61.5,
+      "spo2": 97.9,
+      "temperature": 36.36,
+      "respiratoryRate": 14.5,
+      "hrv": 56.8,
+      "sleepHours": 7.1,
+      "steps": 8085
+    },
+    {
+      "id": "baseline_demo_gradual_drift_7",
+      "timestamp": "2026-11-08T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 95,
+      "heartRate": 61.6,
+      "spo2": 97.9,
+      "temperature": 36.53,
+      "respiratoryRate": 14.1,
+      "hrv": 55.1,
+      "sleepHours": 7.6,
+      "steps": 7670
+    },
+    {
+      "id": "baseline_demo_gradual_drift_8",
+      "timestamp": "2026-11-09T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 93,
+      "heartRate": 61.6,
+      "spo2": 97.9,
+      "temperature": 36.34,
+      "respiratoryRate": 14.6,
+      "hrv": 57,
+      "sleepHours": 7.7,
+      "steps": 7050
+    },
+    {
+      "id": "baseline_demo_gradual_drift_9",
+      "timestamp": "2026-11-10T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 96,
+      "heartRate": 59.8,
+      "spo2": 97.7,
+      "temperature": 36.4,
+      "respiratoryRate": 14.7,
+      "hrv": 56.4,
+      "sleepHours": 7.2,
+      "steps": 7745
+    },
+    {
+      "id": "baseline_demo_gradual_drift_10",
+      "timestamp": "2026-11-11T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 61.8,
+      "spo2": 98.1,
+      "temperature": 36.51,
+      "respiratoryRate": 14.8,
+      "hrv": 54.2,
+      "sleepHours": 7.7,
+      "steps": 7252
+    },
+    {
+      "id": "baseline_demo_gradual_drift_11",
+      "timestamp": "2026-11-12T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 96,
+      "heartRate": 61.9,
+      "spo2": 98,
+      "temperature": 36.48,
+      "respiratoryRate": 14.7,
+      "hrv": 56.7,
+      "sleepHours": 7.1,
+      "steps": 7593
+    },
+    {
+      "id": "baseline_demo_gradual_drift_12",
+      "timestamp": "2026-11-13T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 61.1,
+      "spo2": 97.6,
+      "temperature": 36.36,
+      "respiratoryRate": 14.1,
+      "hrv": 54.2,
+      "sleepHours": 7.4,
+      "steps": 7112
+    },
+    {
+      "id": "baseline_demo_gradual_drift_13",
+      "timestamp": "2026-11-14T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 94,
+      "heartRate": 62.8,
+      "spo2": 98,
+      "temperature": 36.35,
+      "respiratoryRate": 14.5,
+      "hrv": 52.8,
+      "sleepHours": 7.7,
+      "steps": 7229
+    },
+    {
+      "id": "baseline_demo_gradual_drift_14",
+      "timestamp": "2026-11-15T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 60.9,
+      "spo2": 97.9,
+      "temperature": 36.38,
+      "respiratoryRate": 14.5,
+      "hrv": 55.2,
+      "sleepHours": 7.4,
+      "steps": 7796
+    },
+    {
+      "id": "baseline_demo_gradual_drift_15",
+      "timestamp": "2026-11-16T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 93,
+      "heartRate": 62.4,
+      "spo2": 98.2,
+      "temperature": 36.53,
+      "respiratoryRate": 14.6,
+      "hrv": 52.4,
+      "sleepHours": 7.4,
+      "steps": 7399,
+      "note": "Gradual change day 1 of 6"
+    },
+    {
+      "id": "baseline_demo_gradual_drift_16",
+      "timestamp": "2026-11-17T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 62.9,
+      "spo2": 97.8,
+      "temperature": 36.61,
+      "respiratoryRate": 15.1,
+      "hrv": 50,
+      "sleepHours": 7.3,
+      "steps": 7827,
+      "note": "Gradual change day 2 of 6"
+    },
+    {
+      "id": "baseline_demo_gradual_drift_17",
+      "timestamp": "2026-11-18T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 95,
+      "heartRate": 66.7,
+      "spo2": 98.1,
+      "temperature": 36.62,
+      "respiratoryRate": 15.2,
+      "hrv": 45.4,
+      "sleepHours": 7.1,
+      "steps": 7277,
+      "note": "Gradual change day 3 of 6"
+    },
+    {
+      "id": "baseline_demo_gradual_drift_18",
+      "timestamp": "2026-11-19T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 98,
+      "heartRate": 66.9,
+      "spo2": 97.8,
+      "temperature": 36.68,
+      "respiratoryRate": 16,
+      "hrv": 49,
+      "sleepHours": 7.1,
+      "steps": 7191,
+      "note": "Gradual change day 4 of 6"
+    },
+    {
+      "id": "baseline_demo_gradual_drift_19",
+      "timestamp": "2026-11-20T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 95,
+      "heartRate": 68.6,
+      "spo2": 97.8,
+      "temperature": 36.79,
+      "respiratoryRate": 16.2,
+      "hrv": 47.3,
+      "sleepHours": 6.5,
+      "steps": 7183,
+      "note": "Gradual change day 5 of 6"
+    },
+    {
+      "id": "baseline_demo_gradual_drift_20",
+      "timestamp": "2026-11-21T07:15:00.000Z",
+      "source": "baseline_demo",
+      "qualityScore": 97,
+      "heartRate": 69.7,
+      "spo2": 97.8,
+      "temperature": 36.99,
+      "respiratoryRate": 16,
+      "hrv": 43.4,
+      "sleepHours": 6.6,
+      "steps": 5988,
+      "note": "Gradual change day 6 of 6"
+    }
+  ],
+  "timelineEvents": [
+    {
+      "id": "evt_heartRate_0",
+      "firstDetectedAt": "2026-11-17T07:15:00.000Z",
+      "lastObservedAt": "2026-11-21T07:15:00.000Z",
+      "metric": "heartRate",
+      "metricLabel": "Resting Heart Rate",
+      "unit": "bpm",
+      "previousBaseline": 61.7,
+      "currentObserved": 67,
+      "deltaText": "+5.3 bpm",
+      "durationDays": 5,
+      "detectionMethod": "Multi-day recent readings compared with your normal baseline",
+      "status": "active",
+      "severity": "high",
+      "source": "baseline_demo",
+      "supportingEvidence": {
+        "sampleCount": 5,
+        "consistencyPct": 100,
+        "zScore": 2.94,
+        "dataQualityAvg": 96,
+        "summary": "Across 5 recent nights, your resting heart rate averaged 67 bpm instead of your usual 61.7 bpm.",
+        "progressionPoints": [
+          {
+            "date": "2026-11-08",
+            "observed": 61.6,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-09",
+            "observed": 61.6,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-10",
+            "observed": 59.8,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-11",
+            "observed": 61.8,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-12",
+            "observed": 61.9,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-13",
+            "observed": 61.1,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-14",
+            "observed": 62.8,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-15",
+            "observed": 60.9,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-16",
+            "observed": 62.4,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-17",
+            "observed": 62.9,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-18",
+            "observed": 66.7,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-19",
+            "observed": 66.9,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-20",
+            "observed": 68.6,
+            "baseline": 61.7
+          },
+          {
+            "date": "2026-11-21",
+            "observed": 69.7,
+            "baseline": 61.7
+          }
+        ]
+      },
+      "aiExplanationId": "ins_heartRate_0",
+      "alertId": "alt_heartRate_0",
+      "caregiverAck": {
+        "acknowledged": false,
+        "followUpStatus": "pending"
+      }
+    },
+    {
+      "id": "evt_hrv_1",
+      "firstDetectedAt": "2026-11-17T07:15:00.000Z",
+      "lastObservedAt": "2026-11-21T07:15:00.000Z",
+      "metric": "hrv",
+      "metricLabel": "Heart Rate Variability",
+      "unit": "ms",
+      "previousBaseline": 54.3,
+      "currentObserved": 47,
+      "deltaText": "-7.3 ms",
+      "durationDays": 5,
+      "detectionMethod": "Multi-day recent readings compared with your normal baseline",
+      "status": "monitoring",
+      "severity": "moderate",
+      "source": "baseline_demo",
+      "supportingEvidence": {
+        "sampleCount": 5,
+        "consistencyPct": 100,
+        "zScore": 2.09,
+        "dataQualityAvg": 96,
+        "summary": "Across 5 recent nights, your heart rate variability averaged 47 ms instead of your usual 54.3 ms.",
+        "progressionPoints": [
+          {
+            "date": "2026-11-08",
+            "observed": 55.1,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-09",
+            "observed": 57,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-10",
+            "observed": 56.4,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-11",
+            "observed": 54.2,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-12",
+            "observed": 56.7,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-13",
+            "observed": 54.2,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-14",
+            "observed": 52.8,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-15",
+            "observed": 55.2,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-16",
+            "observed": 52.4,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-17",
+            "observed": 50,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-18",
+            "observed": 45.4,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-19",
+            "observed": 49,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-20",
+            "observed": 47.3,
+            "baseline": 54.3
+          },
+          {
+            "date": "2026-11-21",
+            "observed": 43.4,
+            "baseline": 54.3
+          }
+        ]
+      },
+      "aiExplanationId": "ins_hrv_1",
+      "alertId": "alt_hrv_1",
+      "caregiverAck": {
+        "acknowledged": true,
+        "acknowledgedBy": "Sarah Vance",
+        "acknowledgedAt": "2026-11-20T18:40:00.000Z",
+        "followUpNote": "Monitoring overnight trend for 48 hours before sharing summary.",
+        "followUpStatus": "in_progress"
+      }
+    },
+    {
+      "id": "evt_historical_resolved",
+      "firstDetectedAt": "2026-10-28T07:10:00.000Z",
+      "lastObservedAt": "2026-11-02T07:15:00.000Z",
+      "metric": "hrv",
+      "metricLabel": "Heart Rate Variability",
+      "unit": "ms",
+      "previousBaseline": 54.4,
+      "currentObserved": 47.2,
+      "deltaText": "-7.2 ms",
+      "durationDays": 5,
+      "detectionMethod": "5-day recovery pattern compared with your 14-day normal range",
+      "status": "resolved",
+      "severity": "low",
+      "source": "baseline_demo",
+      "supportingEvidence": {
+        "sampleCount": 5,
+        "consistencyPct": 80,
+        "zScore": 1.78,
+        "dataQualityAvg": 95,
+        "summary": "Temporary 5-day HRV dip during late-October travel schedule that returned to 54.0 ms baseline equilibrium by Nov 2.",
+        "progressionPoints": [
+          {
+            "date": "2026-10-27",
+            "observed": 54.2,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-10-28",
+            "observed": 49.8,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-10-29",
+            "observed": 47.4,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-10-30",
+            "observed": 46.1,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-10-31",
+            "observed": 48.2,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-11-01",
+            "observed": 51.6,
+            "baseline": 54.4
+          },
+          {
+            "date": "2026-11-02",
+            "observed": 54.1,
+            "baseline": 54.4
+          }
+        ]
+      },
+      "caregiverAck": {
+        "acknowledged": true,
+        "acknowledgedBy": "Sarah Vance",
+        "acknowledgedAt": "2026-10-30T14:20:00.000Z",
+        "followUpNote": "Checked in by phone; confirmed travel schedule and tracked return to baseline.",
+        "followUpStatus": "completed"
+      }
+    }
+  ],
+  "insights": [
+    {
+      "id": "ins_heartRate_0",
+      "title": "Resting Heart Rate stayed higher than usual for 5 days",
+      "createdAt": "2026-11-21T07:15:00.000Z",
+      "metric": "heartRate",
+      "metricLabel": "Resting Heart Rate",
+      "whatChanged": "Your resting heart rate moved by +5.3 bpm over 5 days compared with your usual range.",
+      "supportingMeasurements": [
+        "Recent average: 67 bpm across 5 nights",
+        "Your personal baseline: 61.7 bpm",
+        "Pattern consistency: 100% of recent readings",
+        "Data coverage: 96% valid wearable readings"
+      ],
+      "baselineComparison": "Usually around 61.7 bpm, recently 67 bpm (+5.3 bpm)",
+      "durationAndTrend": "5 days higher than your normal baseline",
+      "timelineEventId": "evt_heartRate_0",
+      "source": "baseline_demo",
+      "geminiAnalysis": {
+        "generatedAt": "2026-11-21T07:15:00.000Z",
+        "model": "gemini-4-hydrogen",
+        "summary": "Over the past 5 days, your resting heart rate stayed +5.3 bpm away from your usual 61.7 bpm. Because this lasted across 5 nights, it stands out from normal day-to-day ups and downs.",
+        "patternExplanation": "Overnight resting heart rate recorded while you sleep. A steady multi-day change like this can happen when your body is working harder to recover, sleeping less deeply, or adjusting to travel or routine changes.",
+        "nonDiagnosticNextSteps": [
+          "Check your recent sleep hours, daily steps, and fluid intake over the past few days.",
+          "Make sure your wearable strap or ring fits comfortably overnight so readings stay clear.",
+          "Share this timeline summary with a doctor or nurse if the pattern continues for several more days."
+        ],
+        "clinicianQuestions": [
+          "My resting heart rate stayed around 67 bpm instead of my usual 61.7 bpm for 5 days—what else would be helpful for me to note?",
+          "Is there anything else you would like me to keep an eye on over the next few days?"
+        ],
+        "disclaimer": "Plain-English trend summary only. VITALSENSE does not diagnose medical conditions."
+      },
+      "lastError": null
+    },
+    {
+      "id": "ins_hrv_1",
+      "title": "Heart Rate Variability stayed lower than usual for 5 days",
+      "createdAt": "2026-11-21T07:15:00.000Z",
+      "metric": "hrv",
+      "metricLabel": "Heart Rate Variability",
+      "whatChanged": "Your heart rate variability moved by -7.3 ms over 5 days compared with your usual range.",
+      "supportingMeasurements": [
+        "Recent average: 47 ms across 5 nights",
+        "Your personal baseline: 54.3 ms",
+        "Pattern consistency: 100% of recent readings",
+        "Data coverage: 96% valid wearable readings"
+      ],
+      "baselineComparison": "Usually around 54.3 ms, recently 47 ms (-7.3 ms)",
+      "durationAndTrend": "5 days lower than your normal baseline",
+      "timelineEventId": "evt_hrv_1",
+      "source": "baseline_demo",
+      "geminiAnalysis": {
+        "generatedAt": "2026-11-21T07:15:00.000Z",
+        "model": "gemini-4-hydrogen",
+        "summary": "Over the past 5 days, your heart rate variability stayed -7.3 ms away from your usual 54.3 ms. Because this lasted across 5 nights, it stands out from normal day-to-day ups and downs.",
+        "patternExplanation": "Natural beat-to-beat recovery variation during rest. A steady multi-day change like this can happen when your body is working harder to recover, sleeping less deeply, or adjusting to travel or routine changes.",
+        "nonDiagnosticNextSteps": [
+          "Check your recent sleep hours, daily steps, and fluid intake over the past few days.",
+          "Make sure your wearable strap or ring fits comfortably overnight so readings stay clear.",
+          "Share this timeline summary with a doctor or nurse if the pattern continues for several more days."
+        ],
+        "clinicianQuestions": [
+          "My heart rate variability stayed around 47 ms instead of my usual 54.3 ms for 5 days—what else would be helpful for me to note?",
+          "Is there anything else you would like me to keep an eye on over the next few days?"
+        ],
+        "disclaimer": "Plain-English trend summary only. VITALSENSE does not diagnose medical conditions."
+      },
+      "lastError": null
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alt_heartRate_0",
+      "title": "Resting Heart Rate higher than usual (+5.3 bpm)",
+      "severity": "priority",
+      "status": "open",
+      "detectedAt": "2026-11-17T07:15:00.000Z",
+      "metric": "heartRate",
+      "metricLabel": "Resting Heart Rate",
+      "evidenceSummary": "5-day average of 67 bpm compared with your usual 61.7 bpm.",
+      "timelineEventId": "evt_heartRate_0",
+      "source": "baseline_demo",
+      "acknowledgement": {
+        "acknowledged": false
+      },
+      "notifications": [
+        {
+          "id": "notif_alt_heartRate_0_1",
+          "recipient": "Sarah Vance (Primary Caregiver)",
+          "channel": "Caregiver Portal & Digest",
+          "sentAt": "2026-11-17T07:15:00.000Z",
+          "status": "delivered"
+        }
+      ],
+      "followUp": {
+        "status": "none"
+      }
+    },
+    {
+      "id": "alt_hrv_1",
+      "title": "Heart Rate Variability lower than usual (-7.3 ms)",
+      "severity": "attention",
+      "status": "acknowledged",
+      "detectedAt": "2026-11-17T07:15:00.000Z",
+      "metric": "hrv",
+      "metricLabel": "Heart Rate Variability",
+      "evidenceSummary": "5-day average of 47 ms compared with your usual 54.3 ms.",
+      "timelineEventId": "evt_hrv_1",
+      "source": "baseline_demo",
+      "acknowledgement": {
+        "acknowledged": true,
+        "by": "Sarah Vance",
+        "at": "2026-11-20T18:40:00.000Z"
+      },
+      "notifications": [
+        {
+          "id": "notif_alt_hrv_1_1",
+          "recipient": "Sarah Vance (Primary Caregiver)",
+          "channel": "Caregiver Portal & Digest",
+          "sentAt": "2026-11-17T07:15:00.000Z",
+          "status": "delivered"
+        }
+      ],
+      "followUp": {
+        "status": "scheduled",
+        "note": "Monitoring overnight trend for 48 hours before sharing summary.",
+        "updatedAt": "2026-11-20T18:42:00.000Z",
+        "updatedBy": "Sarah Vance"
+      }
+    }
+  ],
+  "consent": {
+    "shareVitalTrends": true,
+    "shareBaselineProgress": true,
+    "shareTimelineDetails": true,
+    "shareAiInsights": true,
+    "notifyCaregiverOnAlerts": true
+  },
+  "preferences": {
+    "restingHeartRateSensitivity": "balanced",
+    "baselineWindowDays": 14,
+    "preferredUnitSystem": "metric",
+    "wearableDeviceName": "PulseRing Gen 3 (Nightly Sync)"
+  },
+  "activeScenario": "demo_baseline",
+  "lastUpdated": "2026-11-25T14:17:09.162Z",
+  "sensorSessions": [
+    {
+      "id": "sens_demo_stream",
+      "adapterId": "simulated_stream",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "source": "simulated",
+      "status": "stopped",
+      "startedAt": "2026-11-25T14:16:29.161Z",
+      "stoppedAt": "2026-11-25T14:17:05.162Z",
+      "sampleCount": 10,
+      "connectionStatus": "disconnected"
+    }
+  ],
+  "liveSamples": [
+    {
+      "id": "live_sens_demo_stream_0",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:29.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 63.5,
+      "spo2": 98.3,
+      "respiratoryRate": 14.8,
+      "temperature": 36.53,
+      "hrv": 53.5,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_1",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:33.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 64.5,
+      "spo2": 98.3,
+      "respiratoryRate": 15.1,
+      "temperature": 36.53,
+      "hrv": 52.2,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_2",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:37.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 65.2,
+      "spo2": 98.3,
+      "respiratoryRate": 15.3,
+      "temperature": 36.52,
+      "hrv": 51.1,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_3",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:41.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 65.6,
+      "spo2": 98.2,
+      "respiratoryRate": 15.4,
+      "temperature": 36.52,
+      "hrv": 50.5,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_4",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:45.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 65.6,
+      "spo2": 98.2,
+      "respiratoryRate": 15.4,
+      "temperature": 36.51,
+      "hrv": 50.5,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_5",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:49.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 65.2,
+      "spo2": 98.1,
+      "respiratoryRate": 15.3,
+      "temperature": 36.5,
+      "hrv": 51.1,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_6",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:53.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 64.4,
+      "spo2": 98.1,
+      "respiratoryRate": 15.1,
+      "temperature": 36.49,
+      "hrv": 52.2,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_7",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:16:57.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 63.5,
+      "spo2": 98,
+      "respiratoryRate": 14.8,
+      "temperature": 36.48,
+      "hrv": 53.5,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_8",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:17:01.161Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 62.5,
+      "spo2": 97.9,
+      "respiratoryRate": 14.5,
+      "temperature": 36.47,
+      "hrv": 54.9,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    },
+    {
+      "id": "live_sens_demo_stream_9",
+      "sessionId": "sens_demo_stream",
+      "timestamp": "2026-11-25T14:17:05.162Z",
+      "source": "simulated",
+      "deviceName": "Demo Multi-Channel Stream (SIMULATED)",
+      "heartRate": 61.8,
+      "spo2": 97.9,
+      "respiratoryRate": 14.3,
+      "temperature": 36.46,
+      "hrv": 55.9,
+      "activityCadence": 4,
+      "sleepHours": 7.4,
+      "signalQuality": 94,
+      "missingChannels": [],
+      "reliabilityNote": "SIMULATED: Stable contact across active channels"
+    }
+  ],
+  "rppgMeasurements": [],
+  "wellbeingCheckins": [
+    {
+      "id": "wb_seed_1",
+      "timestamp": "2026-11-22T20:15:00.000Z",
+      "mood": "calm",
+      "sleepQuality": 4,
+      "energyLevel": 4,
+      "socialConnectedness": "connected",
+      "wantsToTalk": false,
+      "breakReminderRequested": false,
+      "journalNote": "Evening walk after work helped settle resting heart rate."
+    },
+    {
+      "id": "wb_seed_2",
+      "timestamp": "2026-11-21T20:00:00.000Z",
+      "mood": "tired",
+      "sleepQuality": 3,
+      "energyLevel": 3,
+      "socialConnectedness": "connected",
+      "wantsToTalk": false,
+      "breakReminderRequested": true,
+      "journalNote": "Busy day — scheduled an earlier wind-down."
+    }
+  ],
+  "companionMessages": [
+    {
+      "id": "cmp_welcome",
+      "role": "assistant",
+      "text": "Welcome to your optional wellbeing space. You can log how rested or connected you feel, or chat anytime alongside your trusted contacts.",
+      "timestamp": "2026-11-22T20:15:00.000Z"
+    }
+  ],
+  "restRecommendations": [],
+  "safetyContacts": [
+    {
+      "id": "contact_sarah",
+      "name": "Sarah Vance",
+      "relation": "Sister · Authorized Caregiver",
+      "role": "caregiver",
+      "channel": "Portal & Digest",
+      "contactValue": "sarah.vance@vitalsense.demo",
+      "notifyOnCategories": [
+        "physiological_change",
+        "wellbeing_support",
+        "caregiver_followup"
+      ],
+      "consentVerified": true,
+      "addedAt": "2026-11-01T10:00:00.000Z"
+    },
+    {
+      "id": "contact_marcus",
+      "name": "Marcus Chen",
+      "relation": "Close Neighbor · Trusted Contact",
+      "role": "trusted_contact",
+      "channel": "Phone",
+      "contactValue": "+1 (555) 014-8820",
+      "notifyOnCategories": [
+        "wellbeing_support",
+        "missed_checkin"
+      ],
+      "consentVerified": true,
+      "addedAt": "2026-11-05T14:30:00.000Z"
+    }
+  ],
+  "safetyAlerts": [
+    {
+      "id": "sal_seed_1",
+      "category": "physiological_change",
+      "severity": "attention",
+      "title": "Resting heart rate stayed higher (+6.7 bpm)",
+      "description": "Recent nights averaged 69.7 bpm compared with your usual 62.9 bpm baseline.",
+      "createdAt": "2026-11-21T07:15:00.000Z",
+      "source": "simulated",
+      "requiresHumanConfirmation": true,
+      "acknowledged": true,
+      "acknowledgedBy": "Sarah Vance",
+      "acknowledgedAt": "2026-11-21T08:14:00.000Z",
+      "followUpNote": "Checked in by phone; resting and drinking water."
+    }
+  ],
+  "consentRecords": [
+    {
+      "id": "cons_camera_rppg",
+      "scope": "camera_rppg",
+      "granted": false,
+      "updatedAt": "2026-11-25T14:17:09.162Z",
+      "retentionPolicy": "Processed in your browser only; no video saved. Only numeric pulse checks are kept if you choose to save them."
+    },
+    {
+      "id": "cons_caregiver_sharing",
+      "scope": "caregiver_sharing",
+      "granted": true,
+      "updatedAt": "2026-11-25T14:17:09.162Z",
+      "retentionPolicy": "You choose what caregivers see and can pause sharing at any time."
+    },
+    {
+      "id": "cons_wellbeing_trends",
+      "scope": "wellbeing_trends",
+      "granted": true,
+      "updatedAt": "2026-11-25T14:17:09.162Z",
+      "retentionPolicy": "Voluntary daily check-ins only."
+    }
+  ]
+}

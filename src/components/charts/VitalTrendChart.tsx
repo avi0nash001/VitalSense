@@ -10,7 +10,13 @@ import {
   YAxis,
 } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
-import type { MetricKey, VitalReading } from '../../lib/types';
+import type {
+  ChartAnnotation,
+  ChartAnnotationCategory,
+  MetricKey,
+  VitalReading,
+} from '../../lib/types';
+import { matchAnnotationsForPoint } from '../../lib/chartAnnotations';
 import { METRIC_DEFINITIONS } from '../../lib/vitalsEngine';
 import { formatShortDate } from '../ui/Primitives';
 import { GlassRechartsFrame } from './GlassChartShell';
@@ -32,6 +38,14 @@ interface VitalTrendChartProps {
   showCalibrationBand?: boolean;
   height?: number;
   accentColor?: string;
+  annotations?: ChartAnnotation[];
+  onAddAnnotation?: (params: {
+    timestamp: string;
+    note: string;
+    category?: ChartAnnotationCategory;
+  }) => Promise<void> | void;
+  onDeleteAnnotation?: (id: string) => Promise<void> | void;
+  isSavingAnnotation?: boolean;
 }
 
 export function VitalTrendChart({
@@ -43,6 +57,10 @@ export function VitalTrendChart({
   showCalibrationBand = true,
   height = 272,
   accentColor,
+  annotations = [],
+  onAddAnnotation,
+  onDeleteAnnotation,
+  isSavingAnnotation = false,
 }: VitalTrendChartProps) {
   const { theme } = useTheme();
   const def = METRIC_DEFINITIONS[metric];
@@ -110,13 +128,21 @@ export function VitalTrendChart({
     secondaryUnit: metric === 'spo2' ? 'bpm' : '%',
     secondaryPrecision: 1,
     baselineMean: effectiveMean,
-    points: data.map((d) => ({
-      label: d.date,
-      timestamp: d.rawDate,
-      value: d.value,
-      secondaryValue: metric === 'spo2' ? d.hrValue : d.spo2Value,
-      quality: d.quality,
-    })),
+    points: data.map((d) => {
+      const pointAnnotations = matchAnnotationsForPoint({
+        annotations,
+        timestamp: d.rawDate,
+        metric,
+      });
+      return {
+        label: d.date,
+        timestamp: d.rawDate,
+        value: d.value,
+        secondaryValue: metric === 'spo2' ? d.hrValue : d.spo2Value,
+        quality: d.quality,
+        annotations: pointAnnotations,
+      };
+    }),
   };
 
   const headerLeft = hasVisibleBand ? (
@@ -142,8 +168,17 @@ export function VitalTrendChart({
       accentColor={strokeColor}
       height={height}
       headerLeft={headerLeft}
-      headerRight="Click dots to pin · Drag line to scrub"
+      headerRight="Click dot to add note · Drag line to scrub"
       scrubberSeries={scrubberSeries}
+      annotationHandlers={
+        onAddAnnotation || onDeleteAnnotation
+          ? {
+              onAddNote: onAddAnnotation,
+              onDeleteNote: onDeleteAnnotation,
+              isSaving: isSavingAnnotation,
+            }
+          : undefined
+      }
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 14, right: 24, left: -4, bottom: 4 }}>

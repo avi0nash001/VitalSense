@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { MessageSquarePlus, StickyNote, Trash2, X } from 'lucide-react';
+import type { ChartAnnotationCategory } from '../../lib/types';
+import { ANNOTATION_PRESETS } from '../../lib/chartAnnotations';
 import {
   clampProgress01,
   computePointerSweepProgress,
@@ -20,6 +22,16 @@ export interface ScrubberSeriesConfig {
   baselineMean?: number | null;
 }
 
+export interface ChartAnnotationHandlers {
+  onAddNote?: (params: {
+    timestamp: string;
+    note: string;
+    category?: ChartAnnotationCategory;
+  }) => Promise<void> | void;
+  onDeleteNote?: (id: string) => Promise<void> | void;
+  isSaving?: boolean;
+}
+
 interface CurvePointerOverlayProps {
   children: React.ReactNode;
   accentColor?: string;
@@ -27,6 +39,7 @@ interface CurvePointerOverlayProps {
   cycleMs?: number;
   className?: string;
   scrubberSeries?: ScrubberSeriesConfig;
+  annotationHandlers?: ChartAnnotationHandlers;
 }
 
 interface MarkerPosition {
@@ -59,6 +72,7 @@ export function CurvePointerOverlay({
   cycleMs = 4400,
   className = 'h-full w-full',
   scrubberSeries,
+  annotationHandlers,
 }: CurvePointerOverlayProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const pointerGroupRef = useRef<SVGGElement | null>(null);
@@ -78,6 +92,9 @@ export function CurvePointerOverlay({
 
   const [hoveredMarkerIdx, setHoveredMarkerIdx] = useState<number | null>(null);
   const [pinnedMarkerIdx, setPinnedMarkerIdx] = useState<number | null>(null);
+  const [noteFormOpen, setNoteFormOpen] = useState<boolean>(false);
+  const [draftNote, setDraftNote] = useState<string>('');
+  const [draftCategory, setDraftCategory] = useState<ChartAnnotationCategory | undefined>(undefined);
 
   const dragOriginRef = useRef<{ clientX: number; moved: boolean } | null>(null);
   const isInteractingRef = useRef<boolean>(false);
@@ -176,14 +193,36 @@ export function CurvePointerOverlay({
       return { index, x, y, point };
     });
 
-    setPlotLayout({
-      plotLeft: geo.plotLeft,
-      plotRight: geo.plotRight,
-      yTop: geo.yTop,
-      yBottom: geo.yBottom,
-      stageWidth: geo.stageRect.width,
-      stageHeight: geo.stageRect.height,
-      markers,
+    setPlotLayout((prev) => {
+      if (
+        prev &&
+        Math.abs(prev.plotLeft - geo.plotLeft) < 0.5 &&
+        Math.abs(prev.plotRight - geo.plotRight) < 0.5 &&
+        Math.abs(prev.yTop - geo.yTop) < 0.5 &&
+        Math.abs(prev.yBottom - geo.yBottom) < 0.5 &&
+        Math.abs(prev.stageWidth - geo.stageRect.width) < 0.5 &&
+        Math.abs(prev.stageHeight - geo.stageRect.height) < 0.5 &&
+        prev.markers.length === markers.length &&
+        prev.markers.every(
+          (m, idx) =>
+            Math.abs(m.x - markers[idx].x) < 0.5 &&
+            Math.abs(m.y - markers[idx].y) < 0.5 &&
+            m.point.value === markers[idx].point.value &&
+            m.point.timestamp === markers[idx].point.timestamp &&
+            (m.point.annotations?.length ?? 0) === (markers[idx].point.annotations?.length ?? 0)
+        )
+      ) {
+        return prev;
+      }
+      return {
+        plotLeft: geo.plotLeft,
+        plotRight: geo.plotRight,
+        yTop: geo.yTop,
+        yBottom: geo.yBottom,
+        stageWidth: geo.stageRect.width,
+        stageHeight: geo.stageRect.height,
+        markers,
+      };
     });
   }, [getChartGeometry, scrubberSeries?.points]);
 
@@ -199,11 +238,14 @@ export function CurvePointerOverlay({
       typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measureLayout()) : null;
     resizeObs?.observe(stage);
 
+    const rechartsSurface = stage.querySelector('svg.recharts-surface');
     const mutObs =
-      typeof MutationObserver !== 'undefined'
+      typeof MutationObserver !== 'undefined' && rechartsSurface
         ? new MutationObserver(() => measureLayout())
         : null;
-    mutObs?.observe(stage, { childList: true, subtree: true, attributes: true });
+    if (mutObs && rechartsSurface) {
+      mutObs.observe(rechartsSurface, { childList: true, subtree: true });
+    }
 
     return () => {
       window.cancelAnimationFrame(raf);
@@ -319,7 +361,7 @@ export function CurvePointerOverlay({
     );
   }, [activeScrubberRatio, scrubberSeries]);
 
-  const activeMarkerIdx = hoveredMarkerIdx ?? pinnedMarkerIdx;
+  const activeMarkerIdx = pinnedMarkerIdx ?? hoveredMarkerIdx;
   const activeMarker =
     activeMarkerIdx !== null && plotLayout
       ? plotLayout.markers.find((m) => m.index === activeMarkerIdx) ?? null
@@ -359,6 +401,10 @@ export function CurvePointerOverlay({
         dragOriginRef.current.moved = true;
       }
       updateScrubberAtClientX(e.clientX, true);
+      return;
+    }
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('[data-overlay-interactive="true"]')) {
       return;
     }
     // Live hover scan: vertical scrubber line follows cursor smoothly
@@ -607,6 +653,8 @@ export function CurvePointerOverlay({
         <div className="pointer-events-none absolute inset-0 z-20">
           {plotLayout.markers.map((m) => {
             const isActive = activeMarkerIdx === m.index;
+            const pointAnnotations = m.point.annotations ?? [];
+            const hasAnnotations = pointAnnotations.length > 0;
             return (
               <button
                 key={`pulse-marker-${m.index}`}
@@ -615,7 +663,8 @@ export function CurvePointerOverlay({
                 data-testid="point-at-pulse-marker"
                 data-point-index={m.index}
                 data-point-value={m.point.value}
-                aria-label={`${scrubberSeries?.metricLabel ?? 'Reading'} ${m.point.value} ${scrubberSeries?.unit ?? ''} at ${formatPointTimestamp(m.point.timestamp, m.point.label)}`}
+                data-has-annotation={hasAnnotations ? 'true' : 'false'}
+                aria-label={`${scrubberSeries?.metricLabel ?? 'Reading'} ${m.point.value} ${scrubberSeries?.unit ?? ''} at ${formatPointTimestamp(m.point.timestamp, m.point.label)}${hasAnnotations ? ` — Note: ${pointAnnotations[0].note}` : ''}`}
                 onPointerEnter={() => setHoveredMarkerIdx(m.index)}
                 onPointerLeave={() =>
                   setHoveredMarkerIdx((prev) => (prev === m.index ? null : prev))
@@ -625,7 +674,13 @@ export function CurvePointerOverlay({
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPinnedMarkerIdx((prev) => (prev === m.index ? null : m.index));
+                  setPinnedMarkerIdx((prev) => {
+                    const next = prev === m.index ? null : m.index;
+                    setNoteFormOpen(false);
+                    setDraftNote('');
+                    setDraftCategory(undefined);
+                    return next;
+                  });
                 }}
                 style={{ left: `${m.x}px`, top: `${m.y}px` }}
                 className="pointer-events-auto absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vs-accent)]"
@@ -634,16 +689,27 @@ export function CurvePointerOverlay({
                   className={`block rounded-full transition-all ${
                     isActive
                       ? 'h-3.5 w-3.5 ring-4 ring-[var(--vs-accent)]/25 bg-[var(--vs-surface)] border-2 border-[var(--vs-accent)]'
-                      : 'h-2.5 w-2.5 bg-transparent hover:bg-[var(--vs-accent)]/20'
+                      : hasAnnotations
+                        ? 'h-3 w-3 bg-amber-500 ring-2 ring-amber-500/25 border border-white'
+                        : 'h-2.5 w-2.5 bg-transparent hover:bg-[var(--vs-accent)]/20'
                   }`}
                 />
+                {hasAnnotations && (
+                  <span
+                    data-testid="chart-annotation-pin"
+                    className="pointer-events-none absolute -top-2.5 left-1/2 -translate-x-1/2 rounded bg-amber-500 px-1 py-px text-[8.5px] font-bold leading-none text-white shadow-xs"
+                    title={pointAnnotations.map((a) => a.note).join(' · ')}
+                  >
+                    {pointAnnotations.length}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Point-at-Pulse Exact Value & Timestamp Popover */}
+      {/* Point-at-Pulse Exact Value, Timestamp & Context Note Popover */}
       {enabled && activeMarker && plotLayout && scrubberSeries && (
         <div
           role="dialog"
@@ -651,18 +717,18 @@ export function CurvePointerOverlay({
           data-testid="point-at-pulse-popover"
           data-overlay-interactive="true"
           style={{
-            left: `${Math.max(88, Math.min(stageW - 96, activeMarker.x))}px`,
+            left: `${Math.max(120, Math.min(stageW - 125, activeMarker.x))}px`,
             top: `${
-              activeMarker.y > stageH * 0.45
+              activeMarker.y > stageH * 0.48
                 ? Math.max(8, activeMarker.y - 12)
                 : Math.min(stageH - 8, activeMarker.y + 14)
             }px`,
             transform:
-              activeMarker.y > stageH * 0.45
+              activeMarker.y > stageH * 0.48
                 ? 'translate(-50%, -100%)'
                 : 'translate(-50%, 0)',
           }}
-          className="pointer-events-auto absolute z-30 min-w-[188px] max-w-[238px] rounded-xl border border-[var(--vs-border-strong)] bg-[var(--vs-surface)] px-3.5 py-2.5 shadow-lg"
+          className="pointer-events-auto absolute z-30 min-w-[228px] max-w-[268px] rounded-xl border border-[var(--vs-border-strong)] bg-[var(--vs-surface)] px-3.5 py-2.5 shadow-lg"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--vs-accent)]">
@@ -680,6 +746,7 @@ export function CurvePointerOverlay({
                   e.stopPropagation();
                   setPinnedMarkerIdx(null);
                   setHoveredMarkerIdx(null);
+                  setNoteFormOpen(false);
                 }}
                 className="rounded p-0.5 text-[var(--vs-text-muted)] hover:bg-[var(--vs-bg-subtle)] hover:text-[var(--vs-text)]"
               >
@@ -734,6 +801,112 @@ export function CurvePointerOverlay({
                   })()
                 : activeMarker.point.note ?? `Quality ${activeMarker.point.quality}/100`}
             </p>
+          )}
+
+          {/* Saved Context Notes for this point */}
+          {(activeMarker.point.annotations?.length ?? 0) > 0 && (
+            <div className="mt-2 space-y-1 border-t border-[var(--vs-border)] pt-1.5">
+              {activeMarker.point.annotations!.map((ann) => (
+                <div
+                  key={ann.id}
+                  data-testid="popover-context-note"
+                  className="flex items-start justify-between gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-[11px] text-amber-950 border border-amber-200"
+                >
+                  <span className="inline-flex items-start gap-1 leading-snug">
+                    <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-amber-600" />
+                    <span>{ann.note}</span>
+                  </span>
+                  {annotationHandlers?.onDeleteNote && (
+                    <button
+                      type="button"
+                      aria-label="Delete context note"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void annotationHandlers.onDeleteNote?.(ann.id);
+                      }}
+                      className="shrink-0 rounded p-0.5 text-amber-700 hover:bg-amber-200/60"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Context Note Inline Form (shown when point is clicked/pinned) */}
+          {annotationHandlers?.onAddNote && activeMarker.point.timestamp && (
+            <div className="mt-2 border-t border-[var(--vs-border)] pt-1.5">
+              {!noteFormOpen ? (
+                <button
+                  type="button"
+                  data-testid="open-context-note-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPinnedMarkerIdx(activeMarker.index);
+                    setNoteFormOpen(true);
+                  }}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[var(--vs-border-strong)] bg-[var(--vs-bg-subtle)] px-2.5 py-1 text-[11px] font-medium text-[var(--vs-accent-soft-text)] hover:bg-[var(--vs-accent-soft)] transition-colors"
+                >
+                  <MessageSquarePlus className="h-3 w-3" />
+                  Add Context Note
+                </button>
+              ) : (
+                <form
+                  onClick={(e) => e.stopPropagation()}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const trimmed = draftNote.trim();
+                    if (trimmed.length < 2 || !activeMarker.point.timestamp) return;
+                    await annotationHandlers.onAddNote?.({
+                      timestamp: activeMarker.point.timestamp,
+                      note: trimmed,
+                      category: draftCategory,
+                    });
+                    setDraftNote('');
+                    setDraftCategory(undefined);
+                    setNoteFormOpen(false);
+                  }}
+                  className="space-y-1.5"
+                >
+                  <div className="flex flex-wrap gap-1">
+                    {ANNOTATION_PRESETS.slice(0, 4).map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setDraftNote(preset.label);
+                          setDraftCategory(preset.category);
+                        }}
+                        className="rounded border border-[var(--vs-border)] bg-[var(--vs-surface-muted)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--vs-text-secondary)] hover:border-[var(--vs-accent)] hover:text-[var(--vs-text)]"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      data-testid="context-note-input"
+                      value={draftNote}
+                      onChange={(e) => setDraftNote(e.target.value)}
+                      placeholder="e.g. stressful meeting"
+                      maxLength={140}
+                      autoFocus
+                      className="vs-input min-w-0 flex-1 rounded-lg px-2 py-1 text-[11px]"
+                    />
+                    <button
+                      type="submit"
+                      data-testid="save-context-note-btn"
+                      disabled={annotationHandlers.isSaving || draftNote.trim().length < 2}
+                      className="vs-btn-primary shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
         </div>
       )}

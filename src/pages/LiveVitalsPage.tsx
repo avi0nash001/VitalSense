@@ -139,11 +139,20 @@ export function LiveVitalsPage() {
           const parts = buffer.split('\n\n');
           buffer = parts.pop() ?? '';
           for (const chunk of parts) {
+            const eventLine = chunk.split('\n').find((l) => l.startsWith('event: '));
             const dataLine = chunk.split('\n').find((l) => l.startsWith('data: '));
             if (dataLine) {
               try {
                 const payload = JSON.parse(dataLine.slice(6));
-                if (payload && payload.id) {
+                if (eventLine === 'event: deviation' && Array.isArray(payload) && payload.length > 0) {
+                  queryClient.invalidateQueries({ queryKey: ['realtime-deviations'] });
+                  queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                  pushToast({
+                    title: payload[0].title,
+                    description: payload[0].plainEnglishReason,
+                    variant: 'error',
+                  });
+                } else if (payload && payload.id) {
                   setLiveFeed((prev) => [...prev.slice(-29), payload as LiveVitalSample]);
                 }
               } catch {
@@ -162,7 +171,7 @@ export function LiveVitalsPage() {
       controller.abort();
       setSseConnected(false);
     };
-  }, [isSessionRunning, simScenario, token]);
+  }, [isSessionRunning, simScenario, token, pushToast, queryClient]);
 
   const startSessionMutation = useMutation({
     mutationFn: () =>

@@ -18,10 +18,31 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const SESSION_TOKEN_KEY = 'vitalsense_session_token';
+
+function readStoredToken(): string | null {
+  try {
+    return window.sessionStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredToken(token: string | null): void {
+  try {
+    if (token) {
+      window.sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    } else {
+      window.sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => readStoredToken());
   const [isBootstrapping, setIsBootstrapping] = useState<boolean>(true);
 
   const loginDemo = useCallback(async (role: 'member' | 'caregiver') => {
@@ -34,13 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) {
       throw new Error(data.error || 'Unable to sign in to demo workspace.');
     }
+    writeStoredToken(data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user as UserProfile;
   }, []);
 
   useEffect(() => {
-    // Support ?autostart=1 or ?demo=caregiver|member for immediate workspace access
+    // Support ?autostart=1 or ?demo=caregiver|member, or restore existing sessionStorage token
     const params = new URLSearchParams(window.location.search);
     const autostart = params.get('autostart');
     const demoRole = params.get('demo');
@@ -49,6 +71,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const targetRole = demoRole === 'caregiver' ? 'caregiver' : 'member';
       loginDemo(targetRole)
         .catch(() => undefined)
+        .finally(() => setIsBootstrapping(false));
+      return;
+    }
+
+    const existingToken = readStoredToken();
+    if (existingToken) {
+      fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${existingToken}` },
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('Session expired');
+          const data = await res.json();
+          setToken(existingToken);
+          setUser(data.user as UserProfile);
+        })
+        .catch(() => {
+          writeStoredToken(null);
+          setToken(null);
+          setUser(null);
+        })
         .finally(() => setIsBootstrapping(false));
     } else {
       setIsBootstrapping(false);
@@ -65,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) {
       throw new Error(data.error || 'Invalid credentials.');
     }
+    writeStoredToken(data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user as UserProfile;
@@ -86,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed.');
       }
+      writeStoredToken(data.token);
       setToken(data.token);
       setUser(data.user);
       return data.user as UserProfile;
@@ -94,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    writeStoredToken(null);
     setToken(null);
     setUser(null);
   }, []);

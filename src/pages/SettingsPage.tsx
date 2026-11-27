@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -173,6 +174,20 @@ export function SettingsPage() {
         kicker="Appearance, Privacy & Calibration"
         title="Settings & Visual Themes"
         description="Customize your VITALSENSE interface theme, govern exactly what authorized caregivers can view, and tune personal baseline parameters."
+      />
+
+      <StateNotice
+        variant="info"
+        title="Looking for custom heart rate or SpO₂ alert limits?"
+        message="Set personalized threshold triggers for live readings and automatic caregiver notifications on the Smart Alert Thresholds page."
+        action={
+          <Link
+            to="/app/smart-alerts"
+            className="vs-btn-secondary inline-flex items-center rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap"
+          >
+            Open Smart Alerts →
+          </Link>
+        }
       />
 
       <ThemeGallery />

@@ -1,4 +1,5 @@
 import { computeIllustrativeWaveformPoint } from '../../lib/intelligenceEngine';
+import type { ChartAnnotation } from '../../lib/types';
 
 export interface SvgPoint {
   x: number;
@@ -104,6 +105,7 @@ export interface ScrubberPoint {
   secondaryValue?: number | null;
   quality?: number;
   note?: string;
+  annotations?: ChartAnnotation[];
 }
 
 export interface InterpolatedScrubberReadout {

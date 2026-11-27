@@ -2,6 +2,7 @@ import type {
   AlertRecord,
   MetricBaseline,
   MetricKey,
+  SymptomLog,
   VitalReading,
 } from './types';
 
@@ -12,6 +13,14 @@ export interface SevenDayMetricSummary {
   baselineMean: number | null;
   deltaFromBaseline: number | null;
   readingCount: number;
+}
+
+export interface SevenDaySymptomEntry {
+  dateKey: string;
+  symptom: string;
+  severity: number;
+  activityContext?: string;
+  note?: string;
 }
 
 export interface SevenDayBiometricWindow {
@@ -30,6 +39,7 @@ export interface SevenDayBiometricWindow {
     evidenceSummary: string;
     status: string;
   }[];
+  loggedSymptoms: SevenDaySymptomEntry[];
 }
 
 export interface WeeklySummaryReport {
@@ -41,6 +51,7 @@ export interface WeeklySummaryReport {
   keyHighlights: string[];
   suggestedCaregiverNote: string;
   disclaimer: string;
+  loggedSymptoms?: SevenDaySymptomEntry[];
 }
 
 function summarizeSeries(
@@ -82,6 +93,7 @@ export function buildSevenDayBiometricWindow(params: {
   readings: VitalReading[];
   baselines: Record<MetricKey, MetricBaseline> | null;
   alerts: AlertRecord[];
+  symptoms?: SymptomLog[];
 }): SevenDayBiometricWindow {
   const sorted = [...params.readings].sort(
     (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)
@@ -102,6 +114,18 @@ export function buildSevenDayBiometricWindow(params: {
 
   const sleepVals = extract((r) => r.sleepHours);
   const stepVals = extract((r) => r.steps);
+
+  const windowStartKey = windowReadings[0]?.timestamp?.slice(0, 10) ?? null;
+  const windowEndKey =
+    windowReadings[windowReadings.length - 1]?.timestamp?.slice(0, 10) ?? null;
+
+  const allSymptoms = params.symptoms ?? [];
+  const windowSymptoms = allSymptoms.filter((s) => {
+    const dk = s.dateKey || s.timestamp.slice(0, 10);
+    if (!windowStartKey || !windowEndKey) return true;
+    return dk >= windowStartKey && dk <= windowEndKey;
+  });
+  const selectedSymptoms = (windowSymptoms.length > 0 ? windowSymptoms : allSymptoms).slice(0, 10);
 
   return {
     memberName: params.memberName,
@@ -135,6 +159,13 @@ export function buildSevenDayBiometricWindow(params: {
       evidenceSummary: a.evidenceSummary,
       status: a.status,
     })),
+    loggedSymptoms: selectedSymptoms.map((s) => ({
+      dateKey: s.dateKey || s.timestamp.slice(0, 10),
+      symptom: s.symptom,
+      severity: s.severity,
+      activityContext: s.activityContext,
+      note: s.note,
+    })),
   };
 }
 
@@ -144,12 +175,26 @@ export function formatWeeklyReportForSharing(report: WeeklySummaryReport): strin
       ? `\n\n7-Day Highlights:\n${report.keyHighlights.map((h) => `• ${h}`).join('\n')}`
       : '';
 
+  const symptomsList = report.loggedSymptoms ?? [];
+  const symptomsBlock =
+    symptomsList.length > 0
+      ? `\n\nLogged Physical Feelings:\n${symptomsList
+          .map(
+            (s) =>
+              `• ${s.dateKey}: ${s.symptom} (intensity ${s.severity}/5)${
+                s.activityContext ? ` · ${s.activityContext}` : ''
+              }${s.note ? ` — ${s.note}` : ''}`
+          )
+          .join('\n')}`
+      : '';
+
   return [
     `Subject: ${report.subjectLine}`,
     `Period: ${report.periodLabel}`,
     '',
     report.messageBody.trim(),
     highlightsBlock.trimStart(),
+    symptomsBlock.trimStart(),
     '',
     `Caregiver note: ${report.suggestedCaregiverNote.trim()}`,
     '',

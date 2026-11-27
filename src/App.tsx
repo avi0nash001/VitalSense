@@ -25,6 +25,8 @@ import { LiveVitalsPage } from './pages/LiveVitalsPage';
 import { WellbeingPage } from './pages/WellbeingPage';
 import { CaregiverNetworkPage } from './pages/CaregiverNetworkPage';
 import { ThemeGalleryPage } from './pages/ThemeGalleryPage';
+import { SmartAlertsPage } from './pages/SmartAlertsPage';
+import { VoiceAssistantPage } from './pages/VoiceAssistantPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +151,15 @@ export default function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/app/smart-alerts"
+                    element={
+                      <ProtectedRoute allowedRoles={['member']}>
+                        <SmartAlertsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/app/voice" element={<VoiceAssistantPage />} />
                   <Route path="/caregiver" element={<CaregiverPortalPage />} />
                 </Route>
 

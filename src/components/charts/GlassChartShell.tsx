@@ -1,5 +1,9 @@
 import React from 'react';
-import { CurvePointerOverlay, type ScrubberSeriesConfig } from './CurvePointerOverlay';
+import {
+  CurvePointerOverlay,
+  type ChartAnnotationHandlers,
+  type ScrubberSeriesConfig,
+} from './CurvePointerOverlay';
 
 interface GlassRechartsFrameProps {
   children: React.ReactNode;
@@ -12,6 +16,7 @@ interface GlassRechartsFrameProps {
   headerRight?: React.ReactNode;
   enableMovingPointer?: boolean;
   scrubberSeries?: ScrubberSeriesConfig;
+  annotationHandlers?: ChartAnnotationHandlers;
 }
 
 export function StreamingWaveBackdrop(_props: {
@@ -31,11 +36,12 @@ export function GlassRechartsFrame({
   headerRight,
   enableMovingPointer = true,
   scrubberSeries,
+  annotationHandlers,
 }: GlassRechartsFrameProps) {
   return (
     <div
       data-testid="glass-recharts-frame"
-      className={`vs-glass-chart-pane vs-recharts-glass relative overflow-hidden rounded-xl p-3 sm:p-3.5 ${className}`}
+      className={`vs-glass-chart-pane vs-recharts-glass relative overflow-visible rounded-xl p-3 sm:p-3.5 ${className}`}
     >
       {(headerLeft || headerRight) && (
         <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 px-1 text-xs">
@@ -58,6 +64,7 @@ export function GlassRechartsFrame({
           accentColor={accentColor}
           enabled={enableMovingPointer}
           scrubberSeries={scrubberSeries}
+          annotationHandlers={annotationHandlers}
         >
           {children}
         </CurvePointerOverlay>

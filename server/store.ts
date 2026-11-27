@@ -4,17 +4,21 @@ import crypto from 'node:crypto';
 import type {
   AIInsight,
   AlertRecord,
+  ChartAnnotation,
   ConsentRecord,
   ConsentSettings,
   DataSourceKind,
   LiveVitalSample,
   MonitoringPreferences,
+  RealtimeDeviationEvent,
   RestRecommendation,
   RppgMeasurement,
   SafetyAlertRecord,
   SafetyContact,
   ScenarioId,
   SensorSession,
+  SmartAlertThresholds,
+  SymptomLog,
   TimelineEvent,
   UserProfile,
   VitalReading,
@@ -28,6 +32,7 @@ import {
 } from '../src/lib/vitalsEngine.ts';
 import { generateScenarioReadings } from '../src/lib/simulator.ts';
 import { generateSimulatedLiveSample } from '../src/lib/intelligenceEngine.ts';
+import { DEFAULT_SMART_ALERT_THRESHOLDS } from '../src/lib/smartAlertEngine.ts';
 
 export interface StoredAccount extends UserProfile {
   passwordHash: string;
@@ -54,6 +59,10 @@ export interface WorkspaceStoreState {
   safetyContacts: SafetyContact[];
   safetyAlerts: SafetyAlertRecord[];
   consentRecords: ConsentRecord[];
+  smartAlertThresholds: SmartAlertThresholds;
+  chartAnnotations: ChartAnnotation[];
+  realtimeDeviations: RealtimeDeviationEvent[];
+  symptomLogs: SymptomLog[];
 }
 
 const DATA_DIR = path.resolve(process.cwd(), '.vitalsense-data');
@@ -469,6 +478,88 @@ function createInitialStoreState(): WorkspaceStoreState {
     safetyContacts: seededContacts,
     safetyAlerts: seededSafetyAlerts,
     consentRecords: seededConsentRecords,
+    smartAlertThresholds: { ...DEFAULT_SMART_ALERT_THRESHOLDS },
+    chartAnnotations: [
+      {
+        id: 'ann_seed_1',
+        timestamp: readings[Math.max(0, readings.length - 5)]?.timestamp ?? '2026-11-17T07:15:00.000Z',
+        dateKey: (readings[Math.max(0, readings.length - 5)]?.timestamp ?? '2026-11-17').slice(0, 10),
+        metric: 'heartRate',
+        category: 'stress',
+        note: 'Stressful meeting & late workday',
+        createdAt: '2026-11-17T19:30:00.000Z',
+        createdBy: 'Elena Vance',
+      },
+      {
+        id: 'ann_seed_2',
+        timestamp: readings[Math.max(0, readings.length - 2)]?.timestamp ?? '2026-11-20T07:15:00.000Z',
+        dateKey: (readings[Math.max(0, readings.length - 2)]?.timestamp ?? '2026-11-20').slice(0, 10),
+        metric: 'all',
+        category: 'exercise',
+        note: 'Morning brisk walk & hydration',
+        createdAt: '2026-11-20T09:15:00.000Z',
+        createdBy: 'Elena Vance',
+      },
+    ],
+    realtimeDeviations: [],
+    symptomLogs: (() => {
+      const rA = readings[Math.max(0, readings.length - 4)];
+      const rB = readings[Math.max(0, readings.length - 3)];
+      const rC = readings[Math.max(0, readings.length - 1)];
+      return [
+        {
+          id: 'sym_seed_3',
+          timestamp: rC?.timestamp ?? '2026-11-21T07:15:00.000Z',
+          dateKey: (rC?.timestamp ?? '2026-11-21').slice(0, 10),
+          symptom: 'Fatigue',
+          severity: 3,
+          biometricContext: {
+            heartRate: rC?.heartRate,
+            spo2: rC?.spo2,
+            sleepHours: rC?.sleepHours,
+            steps: rC?.steps,
+          },
+          activityContext: 'Shorter sleep & afternoon desk work',
+          note: 'Felt low energy mid-afternoon; rested with water.',
+          createdAt: '2026-11-21T15:20:00.000Z',
+          createdBy: 'Elena Vance',
+        },
+        {
+          id: 'sym_seed_2',
+          timestamp: rB?.timestamp ?? '2026-11-19T07:15:00.000Z',
+          dateKey: (rB?.timestamp ?? '2026-11-19').slice(0, 10),
+          symptom: 'Dizziness',
+          severity: 4,
+          biometricContext: {
+            heartRate: rB?.heartRate,
+            spo2: rB?.spo2,
+            sleepHours: rB?.sleepHours,
+            steps: rB?.steps,
+          },
+          activityContext: 'Standing up after long meeting',
+          note: 'Brief lightheaded spell for ~30 seconds.',
+          createdAt: '2026-11-19T14:40:00.000Z',
+          createdBy: 'Elena Vance',
+        },
+        {
+          id: 'sym_seed_1',
+          timestamp: rA?.timestamp ?? '2026-11-18T07:15:00.000Z',
+          dateKey: (rA?.timestamp ?? '2026-11-18').slice(0, 10),
+          symptom: 'Headache',
+          severity: 2,
+          biometricContext: {
+            heartRate: rA?.heartRate,
+            spo2: rA?.spo2,
+            sleepHours: rA?.sleepHours,
+            steps: rA?.steps,
+          },
+          activityContext: 'Morning wake-up',
+          note: 'Mild tension after 6h sleep.',
+          createdAt: '2026-11-18T08:10:00.000Z',
+          createdBy: 'Elena Vance',
+        },
+      ];
+    })(),
   };
 }
 
@@ -500,6 +591,10 @@ function ensureV2StoreDefaults(state: Partial<WorkspaceStoreState>): WorkspaceSt
     safetyContacts: cleanContacts,
     safetyAlerts: cleanSafetyAlerts,
     consentRecords: cleanConsentRecords,
+    smartAlertThresholds: state.smartAlertThresholds ?? defaults.smartAlertThresholds,
+    chartAnnotations: state.chartAnnotations ?? defaults.chartAnnotations,
+    realtimeDeviations: state.realtimeDeviations ?? defaults.realtimeDeviations,
+    symptomLogs: state.symptomLogs ?? defaults.symptomLogs,
   };
 }
 

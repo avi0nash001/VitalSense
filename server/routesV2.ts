@@ -9,20 +9,149 @@ import {
   WEARABLE_ADAPTERS,
 } from '../src/lib/intelligenceEngine.ts';
 import type {
+  AlertRecord,
+  ChartAnnotation,
   LiveVitalSample,
+  RealtimeDeviationEvent,
   RppgMeasurement,
   SafetyAlertCategory,
   SafetyAlertRecord,
   SafetyContact,
   SensorSession,
+  SymptomLog,
+  SymptomSeverity,
   UserProfile,
   WellbeingCheckin,
   WellbeingCompanionMessage,
 } from '../src/lib/types.ts';
 import { buildThirtyDayCalibrationBand } from '../src/lib/baselineCalibration.ts';
+import {
+  evaluateRealtimeDeviation,
+  sanitizeSmartAlertThresholds,
+} from '../src/lib/smartAlertEngine.ts';
+import {
+  inferAnnotationCategory,
+  toAnnotationDateKey,
+} from '../src/lib/chartAnnotations.ts';
+import { findNearestBiometricContext } from '../src/lib/symptomCorrelation.ts';
 import { sortReadingsChronologically } from '../src/lib/vitalsEngine.ts';
 import { generateSupportiveWellbeingReply } from './geminiService.ts';
-import { computeStoreBaselines, getStore, saveStore } from './store.ts';
+import { computeStoreBaselines, getStore, saveStore, type WorkspaceStoreState } from './store.ts';
+
+function evaluateAndRecordStoreBreaches(
+  store: WorkspaceStoreState,
+  params: {
+    heartRate: number | null | undefined;
+    spo2: number | null | undefined;
+    timestamp?: string;
+    ignoreCooldown?: boolean;
+  }
+): RealtimeDeviationEvent[] {
+  const baselines = computeStoreBaselines(store);
+  const nowIso = params.timestamp ?? new Date().toISOString();
+  const breaches = evaluateRealtimeDeviation({
+    heartRate: params.heartRate,
+    spo2: params.spo2,
+    timestamp: nowIso,
+    hrBaselineMean: baselines.heartRate.mean,
+    spo2BaselineMean: baselines.spo2.mean,
+    thresholds: store.smartAlertThresholds,
+    existingAlerts: store.alerts,
+    ignoreCooldown: params.ignoreCooldown,
+  });
+
+  if (breaches.length === 0) return [];
+
+  const allowCaregiverNotify =
+    store.smartAlertThresholds.notifyCaregivers && store.consent.notifyCaregiverOnAlerts;
+
+  const eligibleContacts = store.safetyContacts.filter(
+    (c) =>
+      c.consentVerified &&
+      (c.role === 'caregiver' || c.notifyOnCategories.includes('physiological_change'))
+  );
+
+  const createdEvents: RealtimeDeviationEvent[] = [];
+
+  for (const b of breaches) {
+    const devId = `rdev_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const alertId = `alt_rt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    const notifiedRecipients = allowCaregiverNotify
+      ? eligibleContacts.map((c) => `${c.name} (${c.channel})`)
+      : [];
+
+    const alertRecord: AlertRecord = {
+      id: alertId,
+      title: b.title,
+      severity: b.severity,
+      status: 'open',
+      detectedAt: nowIso,
+      metric: b.metric,
+      metricLabel: b.metricLabel,
+      evidenceSummary: `${b.plainEnglishReason} (${b.thresholdRuleText})`,
+      timelineEventId: store.timelineEvents[0]?.id ?? 'evt_realtime',
+      source: 'synthetic',
+      acknowledgement: { acknowledged: false },
+      notifications:
+        eligibleContacts.length > 0
+          ? eligibleContacts.map((c, idx) => ({
+              id: `notif_${alertId}_${idx}`,
+              recipient: `${c.name} (${c.relation})`,
+              channel: c.channel,
+              sentAt: nowIso,
+              status: allowCaregiverNotify ? 'delivered' : 'withheld_by_consent',
+            }))
+          : [
+              {
+                id: `notif_${alertId}_0`,
+                recipient: 'Sarah Vance (Primary Caregiver)',
+                channel: 'Caregiver Portal & Digest',
+                sentAt: nowIso,
+                status: allowCaregiverNotify ? 'delivered' : 'withheld_by_consent',
+              },
+            ],
+      followUp: { status: 'none' },
+    };
+
+    const safetyAlert: SafetyAlertRecord = {
+      id: `sal_rt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      category: 'physiological_change',
+      severity: b.severity,
+      title: b.title,
+      description: b.plainEnglishReason,
+      createdAt: nowIso,
+      source: 'system_rule',
+      requiresHumanConfirmation: true,
+      acknowledged: false,
+    };
+
+    const devEvent: RealtimeDeviationEvent = {
+      id: devId,
+      triggeredAt: nowIso,
+      metric: b.metric,
+      metricLabel: b.metricLabel,
+      observedValue: b.observedValue,
+      baselineMean: b.baselineMean,
+      deltaText: b.deltaText,
+      thresholdRuleText: b.thresholdRuleText,
+      severity: b.severity,
+      title: b.title,
+      plainEnglishReason: b.plainEnglishReason,
+      caregiverNotified: allowCaregiverNotify && notifiedRecipients.length > 0,
+      notifiedRecipients,
+      acknowledged: false,
+      alertId,
+    };
+
+    store.alerts.unshift(alertRecord);
+    store.safetyAlerts.unshift(safetyAlert);
+    store.realtimeDeviations = [devEvent, ...store.realtimeDeviations.slice(0, 29)];
+    createdEvents.push(devEvent);
+  }
+
+  return createdEvents;
+}
 
 export interface AuthenticatedRequest extends Request {
   user?: UserProfile;
@@ -201,8 +330,13 @@ export function registerV2Routes(
     if (sess) {
       sess.sampleCount += 1;
     }
+    const triggeredDeviations = evaluateAndRecordStoreBreaches(store, {
+      heartRate: sample.heartRate,
+      spo2: sample.spo2,
+      timestamp: sample.timestamp,
+    });
     saveStore(store);
-    res.status(201).json({ sample });
+    res.status(201).json({ sample, triggeredDeviations });
   });
 
   // Server-Sent Events (SSE) real-time simulation or active session stream
@@ -234,6 +368,15 @@ export function registerV2Routes(
         });
         store.liveSamples = [...store.liveSamples.slice(-59), sample];
         activeSession.sampleCount += 1;
+        const deviations = evaluateAndRecordStoreBreaches(store, {
+          heartRate: sample.heartRate,
+          spo2: sample.spo2,
+          timestamp: sample.timestamp,
+        });
+        if (deviations.length > 0) {
+          saveStore(store);
+          res.write(`event: deviation\ndata: ${JSON.stringify(deviations)}\n\n`);
+        }
         res.write(`event: sample\ndata: ${JSON.stringify(sample)}\n\n`);
       } else {
         const latest = store.liveSamples[store.liveSamples.length - 1];
@@ -758,4 +901,261 @@ export function registerV2Routes(
       res.json({ deleted: true });
     }
   );
+
+  // =========================================================
+  // 7. SMART ALERT THRESHOLDS & REAL-TIME DEVIATION ENGINE
+  // =========================================================
+
+  app.get('/api/smart-alerts/thresholds', requireAuth, (_req: AuthenticatedRequest, res) => {
+    const store = getStore();
+    const baselines = computeStoreBaselines(store);
+    res.json({
+      thresholds: store.smartAlertThresholds,
+      baselines: {
+        heartRate: baselines.heartRate,
+        spo2: baselines.spo2,
+      },
+      contacts: store.safetyContacts,
+      consent: store.consent,
+      recentDeviations: store.realtimeDeviations.slice(0, 12),
+    });
+  });
+
+  app.put(
+    '/api/smart-alerts/thresholds',
+    requireAuth,
+    requireMember,
+    (req: AuthenticatedRequest, res) => {
+      const schema = z.object({
+        enabled: z.boolean().optional(),
+        notifyCaregivers: z.boolean().optional(),
+        heartRateAboveBaselineBpm: z.number().min(4).max(35).optional(),
+        heartRateBelowBaselineBpm: z.number().min(4).max(30).optional(),
+        heartRateMaxBpm: z.number().min(75).max(160).optional(),
+        heartRateMinBpm: z.number().min(35).max(65).optional(),
+        spo2DropBelowBaselinePct: z.number().min(1).max(8).optional(),
+        spo2MinPct: z.number().min(85).max(97).optional(),
+        cooldownMinutes: z.number().min(1).max(240).optional(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Please check your alert threshold numbers.' });
+        return;
+      }
+
+      const store = getStore();
+      store.smartAlertThresholds = sanitizeSmartAlertThresholds(
+        parsed.data,
+        store.smartAlertThresholds
+      );
+      saveStore(store);
+      res.json({ thresholds: store.smartAlertThresholds });
+    }
+  );
+
+  app.post('/api/smart-alerts/evaluate', requireAuth, (req: AuthenticatedRequest, res) => {
+    const schema = z.object({
+      heartRate: z.number().min(30).max(220).nullable().optional(),
+      spo2: z.number().min(70).max(100).nullable().optional(),
+      ignoreCooldown: z.boolean().default(false),
+    });
+    const parsed = schema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid heart rate or SpO2 reading to check.' });
+      return;
+    }
+
+    const store = getStore();
+    const deviations = evaluateAndRecordStoreBreaches(store, {
+      heartRate: parsed.data.heartRate,
+      spo2: parsed.data.spo2,
+      ignoreCooldown: parsed.data.ignoreCooldown,
+    });
+    if (deviations.length > 0) {
+      saveStore(store);
+    }
+    res.json({
+      breached: deviations.length > 0,
+      deviations,
+      recentDeviations: store.realtimeDeviations.slice(0, 12),
+    });
+  });
+
+  app.get('/api/smart-alerts/deviations', requireAuth, (_req: AuthenticatedRequest, res) => {
+    const store = getStore();
+    res.json({ deviations: store.realtimeDeviations.slice(0, 20) });
+  });
+
+  app.post(
+    '/api/smart-alerts/deviations/:id/acknowledge',
+    requireAuth,
+    (req: AuthenticatedRequest, res) => {
+      const store = getStore();
+      const target = store.realtimeDeviations.find((d) => d.id === req.params.id);
+      if (!target) {
+        res.status(404).json({ error: 'Deviation notification not found.' });
+        return;
+      }
+      target.acknowledged = true;
+      if (target.alertId) {
+        const linked = store.alerts.find((a) => a.id === target.alertId);
+        if (linked) {
+          linked.status = 'acknowledged';
+          linked.acknowledgement = {
+            acknowledged: true,
+            by: req.user?.name ?? 'Member',
+            at: new Date().toISOString(),
+          };
+        }
+      }
+      saveStore(store);
+      res.json({ deviation: target });
+    }
+  );
+
+  // =========================================================
+  // 8. BIOMETRIC CHART CONTEXT NOTES / ANNOTATIONS
+  // =========================================================
+
+  app.get('/api/annotations', requireAuth, (_req: AuthenticatedRequest, res) => {
+    const store = getStore();
+    res.json({ annotations: store.chartAnnotations });
+  });
+
+  app.post(
+    '/api/annotations',
+    requireAuth,
+    requireMember,
+    (req: AuthenticatedRequest, res) => {
+      const schema = z.object({
+        timestamp: z.string().min(4).max(80),
+        metric: z
+          .enum(['heartRate', 'spo2', 'temperature', 'respiratoryRate', 'hrv', 'all'])
+          .default('all'),
+        category: z
+          .enum(['exercise', 'stress', 'sleep', 'medication', 'recovery', 'other'])
+          .optional(),
+        note: z.string().trim().min(2).max(160),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Please write a short context note (2–160 characters).' });
+        return;
+      }
+
+      const store = getStore();
+      const annotation: ChartAnnotation = {
+        id: `ann_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: parsed.data.timestamp,
+        dateKey: toAnnotationDateKey(parsed.data.timestamp),
+        metric: parsed.data.metric,
+        category: parsed.data.category ?? inferAnnotationCategory(parsed.data.note),
+        note: parsed.data.note,
+        createdAt: new Date().toISOString(),
+        createdBy: req.user?.name ?? 'Member',
+      };
+      store.chartAnnotations = [annotation, ...store.chartAnnotations.slice(0, 99)];
+      saveStore(store);
+      res.status(201).json({ annotation, annotations: store.chartAnnotations });
+    }
+  );
+
+  app.delete(
+    '/api/annotations/:id',
+    requireAuth,
+    requireMember,
+    (req: AuthenticatedRequest, res) => {
+      const store = getStore();
+      const prevLen = store.chartAnnotations.length;
+      store.chartAnnotations = store.chartAnnotations.filter((a) => a.id !== req.params.id);
+      if (store.chartAnnotations.length === prevLen) {
+        res.status(404).json({ error: 'Context note not found.' });
+        return;
+      }
+      saveStore(store);
+      res.json({ removed: true, annotations: store.chartAnnotations });
+    }
+  );
+
+  // =========================================================
+  // 9. SYMPTOM LOGGER ENDPOINTS
+  // =========================================================
+
+  app.get('/api/symptoms', requireAuth, (req: AuthenticatedRequest, res) => {
+    const store = getStore();
+    if (req.user?.role === 'caregiver' && !store.consent.shareAiInsights) {
+      res.json({ restrictedByConsent: true, symptomLogs: [] });
+      return;
+    }
+    res.json({ restrictedByConsent: false, symptomLogs: store.symptomLogs });
+  });
+
+  app.post(
+    '/api/symptoms',
+    requireAuth,
+    requireMember,
+    (req: AuthenticatedRequest, res) => {
+      const schema = z.object({
+        symptom: z.string().trim().min(2).max(80),
+        severity: z.union([
+          z.literal(1),
+          z.literal(2),
+          z.literal(3),
+          z.literal(4),
+          z.literal(5),
+        ]),
+        timestamp: z.string().min(4).max(80).optional(),
+        dateKey: z.string().min(8).max(20).optional(),
+        activityContext: z.string().trim().max(120).optional(),
+        note: z.string().trim().max(240).optional(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'Please select or enter a feeling and intensity (1–5).' });
+        return;
+      }
+
+      const store = getStore();
+      const latestReadingTs =
+        store.readings[store.readings.length - 1]?.timestamp ?? new Date().toISOString();
+      const timestamp = parsed.data.timestamp ?? latestReadingTs;
+      const dateKey = parsed.data.dateKey || toAnnotationDateKey(timestamp);
+      const biometricContext = findNearestBiometricContext(store.readings, dateKey);
+
+      const entry: SymptomLog = {
+        id: `sym_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp,
+        dateKey,
+        symptom: parsed.data.symptom,
+        severity: parsed.data.severity as SymptomSeverity,
+        biometricContext,
+        activityContext: parsed.data.activityContext || undefined,
+        note: parsed.data.note || undefined,
+        createdAt: new Date().toISOString(),
+        createdBy: req.user?.name ?? 'Member',
+      };
+
+      store.symptomLogs = [entry, ...store.symptomLogs.slice(0, 119)];
+      saveStore(store);
+      res.status(201).json({ symptomLog: entry, symptomLogs: store.symptomLogs });
+    }
+  );
+
+  app.delete(
+    '/api/symptoms/:id',
+    requireAuth,
+    requireMember,
+    (req: AuthenticatedRequest, res) => {
+      const store = getStore();
+      const prevLen = store.symptomLogs.length;
+      store.symptomLogs = store.symptomLogs.filter((s) => s.id !== req.params.id);
+      if (store.symptomLogs.length === prevLen) {
+        res.status(404).json({ error: 'Symptom entry not found.' });
+        return;
+      }
+      saveStore(store);
+      res.json({ removed: true, symptomLogs: store.symptomLogs });
+    }
+  );
 }
+

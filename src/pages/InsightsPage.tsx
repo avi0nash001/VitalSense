@@ -10,6 +10,7 @@ import {
   FileBarChart2,
   GitBranch,
   MessageCircle,
+  Mic,
   RefreshCw,
   Send,
   ShieldCheck,
@@ -19,10 +20,18 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import type {
   AIInsight,
+  ChartAnnotation,
   InsightChatMessage,
+  MetricBaseline,
+  MetricKey,
+  SymptomLog,
+  SymptomSeverity,
   TimelineEvent,
   UnifiedPredictiveObservation,
+  VitalReading,
 } from '../lib/types';
+import { D3DualAxisCorrelationChart } from '../components/charts/D3DualAxisCorrelationChart';
+import { SymptomLogger } from '../components/symptoms/SymptomLogger';
 import {
   DashboardSkeleton,
   formatDateTime,
@@ -36,6 +45,10 @@ interface InsightsResponse {
   restrictedByConsent: boolean;
   insights: AIInsight[];
   timelineEvents: TimelineEvent[];
+  readings?: VitalReading[];
+  baselines?: Record<MetricKey, MetricBaseline> | null;
+  chartAnnotations?: ChartAnnotation[];
+  symptomLogs?: SymptomLog[];
 }
 
 interface UnifiedResponse {
@@ -59,6 +72,9 @@ export function InsightsPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<InsightChatMessage[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [selectedSymptomDateKey, setSelectedSymptomDateKey] = useState<string | undefined>(
+    undefined
+  );
 
   const { data, isLoading, error, refetch } = useQuery<InsightsResponse>({
     queryKey: ['insights'],
@@ -140,6 +156,50 @@ export function InsightsPage() {
     },
   });
 
+  const addSymptomMutation = useMutation({
+    mutationFn: (payload: {
+      symptom: string;
+      severity: SymptomSeverity;
+      timestamp: string;
+      dateKey: string;
+      activityContext?: string;
+      note?: string;
+    }) =>
+      apiFetch<{ symptomLog: SymptomLog }>('/api/symptoms', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['insights'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-overview'] });
+      pushToast({
+        title: 'Feeling logged',
+        description: `Recorded "${res.symptomLog.symptom}" (${res.symptomLog.severity}/5) onto your timeline and weekly report.`,
+        variant: 'success',
+      });
+    },
+    onError: (err) => {
+      pushToast({
+        title: 'Could not save feeling',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'error',
+      });
+    },
+  });
+
+  const deleteSymptomMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/symptoms/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['insights'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-overview'] });
+      pushToast({
+        title: 'Symptom entry removed',
+        variant: 'info',
+      });
+    },
+  });
+
   const handleAskQuestion = (questionText: string) => {
     const trimmed = questionText.trim();
     if (!trimmed || chatMutation.isPending) return;
@@ -184,14 +244,57 @@ export function InsightsPage() {
   }
 
   const unifiedObservations = unifiedQuery.data?.observations ?? [];
+  const correlationReadings = data.readings ?? [];
+  const correlationBaselines = data.baselines ?? null;
+  const correlationAnnotations = data.chartAnnotations ?? [];
+  const symptomLogs = data.symptomLogs ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        kicker="Explainable AI"
-        title="AI Insights &amp; Health Q&amp;A"
-        description="See clearly what changed in your wearable data, why an alert appeared, and ask plain-English questions about your own numbers."
+        kicker="Explainable AI &amp; Pattern Correlation"
+        title="AI Insights &amp; Symptom Correlation"
+        description="Overlay your wearable metrics with logged physical feelings and activity, explore pattern summaries, and ask plain-English questions."
+        actions={
+          <button
+            type="button"
+            data-testid="insights-talk-to-vitalsense-btn"
+            onClick={() => window.dispatchEvent(new CustomEvent('vitalsense:open-voice'))}
+            className="vs-btn-secondary inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap border-[#DDD6FE] bg-[#F5F3FF]/70 text-[#3730A3] hover:bg-[#EEF2FF]"
+          >
+            <Mic className="h-3.5 w-3.5 text-[#4F46E5]" />
+            Talk to VitalSense
+          </button>
+        }
       />
+
+      {/* D3 Dual-Axis Correlation Chart + Symptom Logger */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 items-start">
+        <div className="xl:col-span-7">
+          <D3DualAxisCorrelationChart
+            readings={correlationReadings}
+            baselines={correlationBaselines}
+            symptoms={symptomLogs}
+            annotations={correlationAnnotations}
+            onSelectDate={(dk) => setSelectedSymptomDateKey(dk)}
+          />
+        </div>
+        <div className="xl:col-span-5">
+          <SymptomLogger
+            readings={correlationReadings}
+            symptoms={symptomLogs}
+            selectedDateKey={selectedSymptomDateKey}
+            readOnly={user?.role !== 'member'}
+            isSaving={addSymptomMutation.isPending}
+            onAddSymptom={async (payload) => {
+              await addSymptomMutation.mutateAsync(payload);
+            }}
+            onDeleteSymptom={async (id) => {
+              await deleteSymptomMutation.mutateAsync(id);
+            }}
+          />
+        </div>
+      </div>
 
       {/* Interactive Grounded Q&A Assistant */}
       <SurfaceCard className="p-6 space-y-4">

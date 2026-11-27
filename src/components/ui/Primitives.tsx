@@ -14,12 +14,13 @@ import type { DataSourceKind, LatestMetricSnapshot } from '../../lib/types';
 export function SurfaceCard({
   children,
   className = '',
-}: {
+  ...rest
+}: React.HTMLAttributes<HTMLElement> & {
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={`vs-surface-card ${className}`}>
+    <section className={`vs-surface-card ${className}`} {...rest}>
       {children}
     </section>
   );
@@ -37,16 +38,16 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-4 border-b border-[var(--vs-border)] pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-4 border-b border-[var(--vs-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {kicker && (
-          <p className="text-xs font-medium text-[var(--vs-accent)]">{kicker}</p>
+          <p className="text-xs font-semibold tracking-wide text-[var(--vs-accent)]">{kicker}</p>
         )}
-        <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--vs-text)] sm:text-[26px] text-balance">
+        <h1 className="mt-1.5 font-display text-2xl font-bold tracking-tight text-[var(--vs-text)] sm:text-[30px] text-balance">
           {title}
         </h1>
         {description && (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--vs-text-secondary)]">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--vs-text-secondary)]">
             {description}
           </p>
         )}

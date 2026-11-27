@@ -12,12 +12,19 @@ import { parseWearableCsv } from './src/lib/csvParser.ts';
 import { generateScenarioReadings } from './src/lib/simulator.ts';
 import { getDemoPersona } from './src/lib/demoPersonas.ts';
 import { buildSevenDayBiometricWindow } from './src/lib/weeklySummary.ts';
+import { buildVoiceHealthContextPrompt } from './src/lib/voiceAssistant.ts';
 import type { ScenarioId, UserProfile } from './src/lib/types.ts';
 import {
   generateGeminiInsightExplanation,
+  generateMultilingualVoiceTextReply,
   generateSimpleHealthChatReply,
   generateWeeklyCaregiverSummary,
 } from './server/geminiService.ts';
+import {
+  attachVoiceWebSocketServer,
+  buildLiveVoiceContextSnapshot,
+  issueVoiceWsTicket,
+} from './server/voiceLiveService.ts';
 import {
   computeStoreBaselines,
   getStore,
@@ -237,7 +244,11 @@ async function startServer() {
           : store.timelineEvents.slice(0, 4),
       recentInsights:
         isCaregiver && !store.consent.shareAiInsights ? [] : store.insights.slice(0, 3),
-      recentAlerts: store.alerts.slice(0, 5),
+      recentAlerts: store.alerts.slice(0, 8),
+      smartAlertThresholds: store.smartAlertThresholds,
+      chartAnnotations: store.chartAnnotations,
+      realtimeDeviations: store.realtimeDeviations.slice(0, 10),
+      symptomLogs: isCaregiver && !store.consent.shareAiInsights ? [] : store.symptomLogs,
     });
   });
 
@@ -291,13 +302,23 @@ async function startServer() {
         restrictedByConsent: true,
         insights: [],
         timelineEvents: [],
+        readings: [],
+        baselines: null,
+        chartAnnotations: [],
+        symptomLogs: [],
       });
       return;
     }
+    const sortedReadings = sortReadingsChronologically(store.readings);
+    const baselines = computeStoreBaselines(store);
     res.json({
       restrictedByConsent: false,
       insights: store.insights,
       timelineEvents: store.timelineEvents,
+      readings: sortedReadings.slice(-21),
+      baselines,
+      chartAnnotations: store.chartAnnotations,
+      symptomLogs: store.symptomLogs,
     });
   });
 
@@ -406,9 +427,15 @@ async function startServer() {
             evidenceSummary: a.evidenceSummary,
             status: a.status,
           })),
+          recentSymptoms: store.symptomLogs.slice(0, 5).map((s) => ({
+            dateKey: s.dateKey,
+            symptom: s.symptom,
+            severity: s.severity,
+            activityContext: s.activityContext,
+          })),
         },
       });
-      res.json({ answer });
+      res.json({ reply: answer, answer });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Unable to reach Gemini API right now.';
@@ -447,6 +474,7 @@ async function startServer() {
       readings: demo ? demo.readings : store.readings,
       baselines: demo ? demo.baselines : computeStoreBaselines(store),
       alerts: demo ? demo.recentAlerts : store.alerts,
+      symptoms: store.symptomLogs,
     });
 
     try {
@@ -716,6 +744,96 @@ async function startServer() {
   // VITALSENSE 2.0 Modular Routes
   registerV2Routes(app, { requireAuth, requireMember });
 
+  // Multilingual Voice Assistant Routes (Gemini Live WebSocket ticket + text fallback)
+  app.get('/api/voice/context', requireAuth, (req: AuthenticatedRequest, res) => {
+    const role = req.user?.role ?? 'member';
+    const snapshot = buildLiveVoiceContextSnapshot(role);
+    const restrictedVitals = role === 'caregiver' && !snapshot.consent.shareVitalTrends;
+    res.json({
+      memberName: snapshot.memberName,
+      viewerRole: snapshot.viewerRole,
+      wearableDeviceName: snapshot.wearableDeviceName,
+      lastUpdated: snapshot.lastUpdated,
+      restrictedVitals,
+      latestReading: restrictedVitals ? null : snapshot.latestReading,
+      baselines:
+        role === 'caregiver' && !snapshot.consent.shareBaselineProgress
+          ? null
+          : snapshot.baselines,
+      activeAlertCount: snapshot.alerts.filter((a) => a.status !== 'resolved').length,
+      symptomCount:
+        role === 'caregiver' && !snapshot.consent.shareAiInsights
+          ? 0
+          : snapshot.symptomLogs.length,
+    });
+  });
+
+  app.post('/api/voice/session-token', requireAuth, (req: AuthenticatedRequest, res) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+      res.status(503).json({
+        error:
+          'Live voice needs a configured GEMINI_API_KEY in Settings > Secrets. You can configure the key and tap the microphone again.',
+      });
+      return;
+    }
+    const userId = req.user?.id ?? 'user_member_elena';
+    const role = req.user?.role ?? 'member';
+    const ticket = issueVoiceWsTicket(userId, role);
+    res.json({
+      ticket,
+      wsPath: '/ws/voice',
+      model: 'gemini-3.8-live',
+    });
+  });
+
+  app.post('/api/voice/chat', requireAuth, async (req: AuthenticatedRequest, res) => {
+    const schema = z.object({
+      message: z.string().min(1).max(800),
+      history: z
+        .array(
+          z.object({
+            role: z.enum(['user', 'assistant']),
+            text: z.string().max(1500),
+          })
+        )
+        .max(12)
+        .default([]),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Please enter a brief question or message.' });
+      return;
+    }
+
+    const role = req.user?.role ?? 'member';
+    const snapshot = buildLiveVoiceContextSnapshot(role);
+    const systemInstruction = buildVoiceHealthContextPrompt(snapshot);
+
+    try {
+      const reply = await generateMultilingualVoiceTextReply({
+        message: parsed.data.message.trim(),
+        history: parsed.data.history,
+        systemInstruction,
+      });
+      res.json({ reply });
+    } catch (err) {
+      let msg =
+        err instanceof Error ? err.message : 'Unable to reach Gemini API right now.';
+      if (msg.trim().startsWith('{')) {
+        try {
+          const parsedErr = JSON.parse(msg) as { error?: { message?: string } };
+          if (parsedErr?.error?.message) {
+            msg = parsedErr.error.message;
+          }
+        } catch {
+          // Keep original message if not valid JSON
+        }
+      }
+      res.status(502).json({ error: msg });
+    }
+  });
+
   // Vite dev middleware or production static serving
   const isProd = process.env.NODE_ENV === 'production';
   if (!isProd) {
@@ -734,9 +852,10 @@ async function startServer() {
   }
 
   const port = Number(process.env.PORT || 3000);
-  app.listen(port, '0.0.0.0', () => {
+  const server = app.listen(port, '0.0.0.0', () => {
     console.log(`VITALSENSE server listening on http://0.0.0.0:${port}`);
   });
+  attachVoiceWebSocketServer(server);
 }
 
 startServer().catch((err) => {

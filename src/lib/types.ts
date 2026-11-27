@@ -385,4 +385,76 @@ export interface ConsentRecord {
   retentionPolicy: string;
 }
 
+export interface SmartAlertThresholds {
+  enabled: boolean;
+  notifyCaregivers: boolean;
+  heartRateAboveBaselineBpm: number;
+  heartRateBelowBaselineBpm: number;
+  heartRateMaxBpm: number;
+  heartRateMinBpm: number;
+  spo2DropBelowBaselinePct: number;
+  spo2MinPct: number;
+  cooldownMinutes: number;
+  updatedAt: string;
+}
+
+export type ChartAnnotationCategory =
+  | 'exercise'
+  | 'stress'
+  | 'sleep'
+  | 'medication'
+  | 'recovery'
+  | 'other';
+
+export interface ChartAnnotation {
+  id: string;
+  timestamp: string;
+  dateKey: string;
+  metric: MetricKey | 'all';
+  category: ChartAnnotationCategory;
+  note: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface RealtimeDeviationEvent {
+  id: string;
+  triggeredAt: string;
+  metric: 'heartRate' | 'spo2';
+  metricLabel: string;
+  observedValue: number;
+  baselineMean: number | null;
+  deltaText: string;
+  thresholdRuleText: string;
+  severity: 'attention' | 'priority';
+  title: string;
+  plainEnglishReason: string;
+  caregiverNotified: boolean;
+  notifiedRecipients: string[];
+  acknowledged: boolean;
+  alertId?: string;
+}
+
+export type SymptomSeverity = 1 | 2 | 3 | 4 | 5;
+
+export interface SymptomLog {
+  id: string;
+  timestamp: string;
+  dateKey: string;
+  symptom: string;
+  severity: SymptomSeverity;
+  biometricContext?: {
+    heartRate?: number;
+    spo2?: number;
+    sleepHours?: number;
+    steps?: number;
+  };
+  activityContext?: string;
+  note?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+
+
 

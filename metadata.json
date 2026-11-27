@@ -1,7 +1,7 @@
 {
   "name": "VITALSENSE",
   "description": "Wearable-based early health warning system monitoring heart rate, SpO2, sleep, and daily steps with personal baselines, plain-English explanations, and caregiver alerts.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

@@ -128,6 +128,7 @@ export async function generateSimpleHealthChatReply(params: {
     avgSteps?: number | null;
     activeChanges: { metricLabel: string; deltaText: string; durationDays: number; summary: string }[];
     recentAlerts: { title: string; evidenceSummary: string; status: string }[];
+    recentSymptoms?: { dateKey: string; symptom: string; severity: number; activityContext?: string }[];
   };
 }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -266,13 +267,13 @@ export async function generateWeeklyCaregiverSummary(
 
   const prompt = `Synthesize the last 7 days of wearable readings for ${windowData.memberName} (${periodLabel}) into a plain-English, non-diagnostic update ready to send by email or text message to a family caregiver.
 
-7-Day Biometric Summary Data (use ONLY these figures):
+7-Day Biometric Summary Data & Logged Feelings (use ONLY these figures and entries):
 ${JSON.stringify(windowData, null, 2)}
 
 Requirements:
 - subjectLine: Clear, calm subject line for an email or caregiver message (include ${windowData.memberName}'s first name and "${periodLabel}").
-- messageBody: 2 short, friendly paragraphs written in everyday English (no clinical jargon, no Z-scores, no medical diagnoses) summarizing heart rate, SpO2, sleep, and daily steps compared to personal baseline.
-- keyHighlights: 3 to 4 concise bullet points covering heart rate, blood oxygen, sleep duration, and daily steps from the 7-day data above.
+- messageBody: 2 short, friendly paragraphs written in everyday English (no clinical jargon, no Z-scores, no medical diagnoses) summarizing heart rate, SpO2, sleep, daily steps, and any logged physical feelings/symptoms compared to personal baseline.
+- keyHighlights: 3 to 4 concise bullet points covering heart rate, blood oxygen, sleep duration, daily steps, and logged feelings from the 7-day data above.
 - suggestedCaregiverNote: 1 gentle, practical sentence suggesting how the caregiver can check in or support rest and hydration.
 - disclaimer: 1 clear sentence stating this is an informational wearable trend summary and not a medical diagnosis.`;
 
@@ -327,6 +328,74 @@ Requirements:
     keyHighlights: parsed.keyHighlights.slice(0, 5),
     suggestedCaregiverNote: parsed.suggestedCaregiverNote,
     disclaimer: parsed.disclaimer,
+    loggedSymptoms: windowData.loggedSymptoms,
   };
 }
+
+export async function generateMultilingualVoiceTextReply(params: {
+  message: string;
+  history: { role: 'user' | 'assistant'; text: string }[];
+  systemInstruction: string;
+}): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+    throw new Error(
+      'GEMINI_API_KEY is not configured in environment secrets. Add a valid key in Settings > Secrets to chat with VitalSense.'
+    );
+  }
+
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      },
+    },
+  });
+
+  const recentConversation = params.history
+    .slice(-8)
+    .map((m) => `${m.role === 'user' ? 'User' : 'VitalSense'}: ${m.text}`)
+    .join('\n');
+
+  const prompt = `${recentConversation ? `Recent conversation:\n${recentConversation}\n\n` : ''}User message: "${params.message}"
+
+Detect the language of the latest user message automatically (supporting Kannada, English, Hindi, Tamil, Telugu, Malayalam, Marathi, Bengali, Gujarati, other supported languages, and mixed-language inputs) and switch languages naturally whenever the user switches. Reply in the exact same language (or language mix) in a warm, simple, clear, and concise manner (2 to 4 short sentences unless they ask for step-by-step details).`;
+
+  const modelsToTry = ['gemini-4-hydrogen', 'gemini-3.1-flash-lite'] as const;
+  let lastError: unknown;
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: params.systemInstruction,
+        },
+      });
+
+      const text = (response.text ?? '').trim();
+      if (!text) {
+        throw new Error('Gemini returned an empty reply.');
+      }
+      return text;
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      const isTransientOverload =
+        msg.includes('503') ||
+        msg.toLowerCase().includes('high demand') ||
+        msg.toLowerCase().includes('unavailable');
+      if (!isTransientOverload) {
+        throw err;
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Unable to reach Gemini API right now.');
+}
+
 
